@@ -1186,7 +1186,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -3912586952565438497, guid: 69c47c7283f05254cb5f20e44b2b0fdf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1723204885}
   m_SourcePrefab: {fileID: 100100000, guid: 69c47c7283f05254cb5f20e44b2b0fdf, type: 3}
 --- !u!1 &1150855842
 GameObject:
@@ -1343,6 +1346,33 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1739624889}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1723204881 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -3912586952565438497, guid: 69c47c7283f05254cb5f20e44b2b0fdf, type: 3}
+  m_PrefabInstance: {fileID: 1141440464}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &1723204885
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1723204881}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 3934857333534702760, guid: 69c47c7283f05254cb5f20e44b2b0fdf, type: 3}
 --- !u!1 &1739624888
 GameObject:
   m_ObjectHideFlags: 0
@@ -1727,7 +1757,7 @@ Transform:
   m_GameObject: {fileID: 919132147544547216}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7055928, z: -0, w: 0.70861757}
-  m_LocalPosition: {x: 0.029999947, y: 0, z: -0.029871888}
+  m_LocalPosition: {x: 0.029999947, y: 0.538, z: -0.029871888}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1780,6 +1810,7 @@ GameObject:
   - component: {fileID: 919132147544547218}
   - component: {fileID: 919132147544547217}
   - component: {fileID: 919132147544547219}
+  - component: {fileID: 919132147544547220}
   m_Layer: 0
   m_Name: FPS ARMS RIG 1
   m_TagString: Untagged
@@ -1901,6 +1932,34 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AnimationController: {fileID: 919132147544547218}
+  lookSpeed: 2
+  lookXLimit: 45
+--- !u!143 &919132147544547220
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132147544547216}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.5
+  m_Radius: 0.29
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &988796797225203108
 Transform:
   m_ObjectHideFlags: 0

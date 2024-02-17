@@ -26,6 +26,11 @@ public class ArmsController : MonoBehaviour
     CharacterController characterController;
     private bool move_mode = false;
 
+    private string[] recent_left_directions;
+    private string[] recent_right_directions;
+    private float last_recent_direction_time = 0.0f;
+    private float max_recent_direction_time = 5.0f;
+
     private void Start()
     {
         controller = Gamepad.current;
