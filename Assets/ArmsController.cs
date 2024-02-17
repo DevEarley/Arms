@@ -25,10 +25,14 @@ public class ArmsController : MonoBehaviour
     }
     void Update()
     {
-        _update_left_stick();
-        _update_right_stick();
+
         if (controller != null)
         {
+            _update_left_stick();
+            _update_right_stick();
+            _update_left_hand();
+            _update_right_hand();
+
             _process_left_arm();
             _process_right_arm();
         }
@@ -37,6 +41,40 @@ public class ArmsController : MonoBehaviour
             controller = Gamepad.current;
         }
     }
+
+    private void _update_left_hand()
+    {
+        if (controller.leftShoulder.value > 0)
+        {
+            AnimationController.Play("l-hand-1", 4);
+        }
+        else if (controller.leftTrigger.value > 0)
+        {
+            AnimationController.Play("l-hand-2", 4);
+        }
+        else
+        {
+            AnimationController.Play("nothin", 4);
+        }
+    }
+
+
+    private void _update_right_hand()
+    {
+        if (controller.rightShoulder.isPressed  )
+        {
+            AnimationController.Play("r-hand-1", 3);
+        }
+        else if (controller.rightTrigger.isPressed )
+        {
+            AnimationController.Play("r-hand-2", 3);
+        }
+        else
+        {
+            AnimationController.Play("nothin", 3);
+        }
+    }
+
 
     private bool _should_center_left_arm()
     {
