@@ -11,16 +11,12 @@ public class ArmsController : MonoBehaviour
     private float left_timer = 0.0f;
     private float right_timer = 0.0f;
     private float left_timer_cap =0.25f;
-    private float animation_speed =2.25f;
-    private float right_timer_cap = 0.5f;
+    private float animation_speed =2.50f;
+    private float right_timer_cap = 0.25f;
     private bool left_arm_ready_to_move = true;
     private bool right_arm_ready_to_move = true;
     private string left_direction = "center";
     private string right_direction = "center";
-    private bool left_stick_changed = false;
-    private bool right_stick_changed = false;
-    private string old_left_stick_direction = "center";
-    private string old_right_stick_direction = "center";
     private Gamepad controller;
     private void Start()
     {
@@ -29,8 +25,6 @@ public class ArmsController : MonoBehaviour
     }
     void Update()
     {
-        old_left_stick_direction = left_direction;
-        old_right_stick_direction = right_direction;
         _update_left_stick();
         _update_right_stick();
         if (controller != null)
@@ -43,10 +37,6 @@ public class ArmsController : MonoBehaviour
             controller = Gamepad.current;
         }
     }
-    private bool _should_run_left_timer()
-    {
-        return left_arm_ready_to_move == false;//left_state != left_direction && left_direction != "center";
-    }
 
     private bool _should_center_left_arm()
     {
@@ -57,6 +47,7 @@ public class ArmsController : MonoBehaviour
     {
         return left_state == "center" && left_direction != "center" && left_arm_ready_to_move == true;
     }
+
     private void _run_left_timer()
     {
         left_timer += Time.deltaTime;
@@ -65,8 +56,8 @@ public class ArmsController : MonoBehaviour
             left_arm_ready_to_move = true;
             left_timer = 0.0f;
         }
-       
     }
+
     private void _process_left_arm()
     {
         if (_should_center_left_arm())
@@ -83,16 +74,11 @@ public class ArmsController : MonoBehaviour
             Debug.Log($"state | {left_state} | direction | {left_direction}");
             _animate_left_arm();
         }
-        if (_should_run_left_timer())
+        if (left_arm_ready_to_move == false)
         {
             _run_left_timer();
             Debug.Log("_should_run_left_timer == true");
         }
-    }
-
-    private bool _should_run_right_timer()
-    {
-        return right_arm_ready_to_move == false;//right_state != right_direction && right_direction != "center";
     }
 
     private bool _should_center_right_arm()
@@ -104,6 +90,7 @@ public class ArmsController : MonoBehaviour
     {
         return right_state == "center" && right_direction != "center" && right_arm_ready_to_move == true;
     }
+
     private void _run_right_timer()
     {
         right_timer += Time.deltaTime;
@@ -112,7 +99,6 @@ public class ArmsController : MonoBehaviour
             right_arm_ready_to_move = true;
             right_timer = 0.0f;
         }
-
     }
 
     private void _process_right_arm()
@@ -131,7 +117,7 @@ public class ArmsController : MonoBehaviour
             Debug.Log($"state | {right_state} | direction | {right_direction}");
             _animate_right_arm();
         }
-        if (_should_run_right_timer())
+        if (right_arm_ready_to_move == false)
         {
             _run_right_timer();
             Debug.Log("_should_run_right_timer == true");
@@ -161,14 +147,12 @@ public class ArmsController : MonoBehaviour
         {
             left_stick_changed = left_direction != "up";
             left_direction = "up";
-
         }
         else
         {
             left_stick_changed = true;
             left_direction = "center";
         }
-
     }
 
     private void _animate_left_arm()
@@ -176,25 +160,21 @@ public class ArmsController : MonoBehaviour
         if (left_direction == "left")
         {
             left_state = "left";
-
             AnimationController.Play("l-l", 2);
         }
         if (left_direction == "right")
         {
             left_state = "right";
-
             AnimationController.Play("l-r", 2);
         }
         if (left_direction == "up")
         {
             left_state = "up";
-
             AnimationController.Play("l-u", 2);
         }
         if (left_direction == "down")
         {
             left_state = "down";
-
             AnimationController.Play("l-d", 2);
         }
     }
@@ -219,7 +199,6 @@ public class ArmsController : MonoBehaviour
         }
         left_state = "center";
     }
-
   
     private void _update_right_stick()
     {
@@ -246,12 +225,11 @@ public class ArmsController : MonoBehaviour
         }
         else
         {
-
             right_stick_changed = true;
             right_direction = "center";
         }
-
     }
+
     private void _animate_right_arm()
     {
         if (right_direction == "left")
