@@ -1,54 +1,49 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 public class ArmsController : MonoBehaviour
 {
-    public Animator AnimationController;
-    private string left_state = "center";
-    private string right_state = "center";
-    private float left_timer = 0.0f;
-    private float right_timer = 0.0f;
-    private float left_timer_cap =0.25f;
+    private float rotation_x = 0;
     private float animation_speed =2.50f;
-    private float right_timer_cap = 0.25f;
-    private bool left_arm_ready_to_move = true;
-    private bool right_arm_ready_to_move = true;
-    private string left_direction = "center";
-    private string right_direction = "center";
-    private Gamepad controller;
-    private GameObject MainCamera;
-    float rotationX = 0;
-    public float lookSpeed = 0.50f;
-    public float lookXLimit = 45.0f;
-    CharacterController characterController;
     private bool move_mode = false;
+    public float look_speed = 0.50f;
+    public float look_x_limit = 45.0f;
 
-    private string[] recent_left_directions;
-    private string[] recent_right_directions;
-    private float last_recent_direction_time = 0.0f;
-    private float max_recent_direction_time = 5.0f;
+    private bool left_arm_ready_to_move = true;
+    private string left_state = "center";
+    private string left_direction = "center";
+    private float left_timer = 0.0f;
+    private float left_timer_cap =0.25f;
+
+    private bool right_arm_ready_to_move = true;
+    private string right_state = "center";
+    private string right_direction = "center";
+    private float right_timer = 0.0f;
+    private float right_timer_cap = 0.25f;
+
+    public Animator animator;
+    private CharacterController character_controller;
+    private Gamepad gamepad_controller;
+    private GameObject main_camera;
 
     private void Start()
     {
-        controller = Gamepad.current;
-        characterController = GetComponent<CharacterController>();
-        MainCamera = GameObject.Find("Main Camera");
-        AnimationController.speed = animation_speed;
+        gamepad_controller = Gamepad.current;
+        character_controller = GetComponent<CharacterController>();
+        main_camera = GameObject.Find("Main Camera");
+        animator.speed = animation_speed;
     }
 
     void Update()
     {
          var moveDirection = new Vector3(0, 0, 0);
-        if (!characterController.isGrounded)
+        if (!character_controller.isGrounded)
         {
             moveDirection.y += Physics.gravity.y;
         }
-        if (controller != null)
+        if (gamepad_controller != null)
         {
-            if (controller.buttonSouth.wasReleasedThisFrame)
+            if (gamepad_controller.buttonSouth.wasReleasedThisFrame)
             {
                 _switch_modes();
             }
@@ -69,18 +64,18 @@ public class ArmsController : MonoBehaviour
         }
         else
         {
-            controller = Gamepad.current;
+            gamepad_controller = Gamepad.current;
         }
-        characterController.Move(moveDirection * Time.deltaTime);
+        character_controller.Move(moveDirection * Time.deltaTime);
     }
 
     private void _switch_modes()
     {
-        rotationX = 0;
-        MainCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
+        rotation_x = 0;
+        main_camera.transform.localRotation = Quaternion.Euler(rotation_x, 0, 0);
         _center_right_arm();
-        AnimationController.Play("reset", 3);
-        AnimationController.Play("reset", 4);
+        animator.Play("reset", 3);
+        animator.Play("reset", 4);
         _center_left_arm();
         move_mode = !move_mode;
     }
@@ -89,53 +84,51 @@ public class ArmsController : MonoBehaviour
     {
         Vector3 forward = transform.TransformDirection(Vector3.forward);
         Vector3 right = transform.TransformDirection(Vector3.right);
-        moveDirection += (forward * controller.leftStick.value.y) + (right * controller.leftStick.value.x);
+        moveDirection += (forward * gamepad_controller.leftStick.value.y) + (right * gamepad_controller.leftStick.value.x);
         return moveDirection;
     }
 
     private void _update_camera_rotation()
     {
-        var input_y = Mouse.current.delta.value.y + controller.rightStick.value.y;
-        var input_x = Mouse.current.delta.value.x + controller.rightStick.value.x;
-        rotationX += -input_y * lookSpeed;
-        rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit);
-        MainCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
-        transform.rotation *= Quaternion.Euler(0, input_x * lookSpeed, 0);
+        var input_y = Mouse.current.delta.value.y + gamepad_controller.rightStick.value.y;
+        var input_x = Mouse.current.delta.value.x + gamepad_controller.rightStick.value.x;
+        rotation_x += -input_y * look_speed;
+        rotation_x = Mathf.Clamp(rotation_x, -look_x_limit, look_x_limit);
+        main_camera.transform.localRotation = Quaternion.Euler(rotation_x, 0, 0);
+        transform.rotation *= Quaternion.Euler(0, input_x * look_speed, 0);
     }
 
     private void _update_left_hand()
     {
-        if (controller.leftShoulder.value > 0)
+        if (gamepad_controller.leftShoulder.value > 0)
         {
-            AnimationController.Play("l-hand-1", 4);
+            animator.Play("l-hand-1", 4);
         }
-        else if (controller.leftTrigger.value > 0)
+        else if (gamepad_controller.leftTrigger.value > 0)
         {
-            AnimationController.Play("l-hand-2", 4);
+            animator.Play("l-hand-2", 4);
         }
         else
         {
-            AnimationController.Play("reset", 4);
+            animator.Play("reset", 4);
         }
     }
-
 
     private void _update_right_hand()
     {
-        if (controller.rightShoulder.isPressed  )
+        if (gamepad_controller.rightShoulder.isPressed  )
         {
-            AnimationController.Play("r-hand-1", 3);
+            animator.Play("r-hand-1", 3);
         }
-        else if (controller.rightTrigger.isPressed )
+        else if (gamepad_controller.rightTrigger.isPressed )
         {
-            AnimationController.Play("r-hand-2", 3);
+            animator.Play("r-hand-2", 3);
         }
         else
         {
-            AnimationController.Play("reset", 3);
+            animator.Play("reset", 3);
         }
     }
-
 
     private bool _should_center_left_arm()
     {
@@ -225,31 +218,26 @@ public class ArmsController : MonoBehaviour
 
     private void _update_left_stick()
     {
-        bool left_stick_changed;
-        if (controller.leftStick.value.x > 0.5)
+
+        if (gamepad_controller.leftStick.value.x > 0.5)
         {
-            left_stick_changed = left_direction != "right";
             left_direction = "right";
         }
-        else if (controller.leftStick.value.x < -0.5)
+        else if (gamepad_controller.leftStick.value.x < -0.5)
         {
-            left_stick_changed = left_direction != "left";
             left_direction = "left";
         }
-        else if (controller.leftStick.value.y < -0.5)
+        else if (gamepad_controller.leftStick.value.y < -0.5)
         {
 
-            left_stick_changed = left_direction != "down";
             left_direction = "down";
         }
-        else if (controller.leftStick.value.y > 0.5)
+        else if (gamepad_controller.leftStick.value.y > 0.5)
         {
-            left_stick_changed = left_direction != "up";
             left_direction = "up";
         }
         else
         {
-            left_stick_changed = true;
             left_direction = "center";
         }
     }
@@ -259,22 +247,22 @@ public class ArmsController : MonoBehaviour
         if (left_direction == "left")
         {
             left_state = "left";
-            AnimationController.Play("l-l", 2);
+            animator.Play("l-l", 2);
         }
         if (left_direction == "right")
         {
             left_state = "right";
-            AnimationController.Play("l-r", 2);
+            animator.Play("l-r", 2);
         }
         if (left_direction == "up")
         {
             left_state = "up";
-            AnimationController.Play("l-u", 2);
+            animator.Play("l-u", 2);
         }
         if (left_direction == "down")
         {
             left_state = "down";
-            AnimationController.Play("l-d", 2);
+            animator.Play("l-d", 2);
         }
     }
 
@@ -282,49 +270,43 @@ public class ArmsController : MonoBehaviour
     {
         if (left_state == "left")
         {
-            AnimationController.Play("l-l-t", 2);
+            animator.Play("l-l-t", 2);
         }
         if (left_state == "right")
         {
-            AnimationController.Play("l-r-t", 2);
+            animator.Play("l-r-t", 2);
         }
         if (left_state == "up")
         {
-            AnimationController.Play("l-u-t", 2);
+            animator.Play("l-u-t", 2);
         }
         if (left_state == "down")
         {
-            AnimationController.Play("l-d-t", 2);
+            animator.Play("l-d-t", 2);
         }
         left_state = "center";
     }
   
     private void _update_right_stick()
     {
-        bool right_stick_changed;
-        if (controller.rightStick.value.x > 0.5f)
+        if (gamepad_controller.rightStick.value.x > 0.5f)
         {
-            right_stick_changed = right_direction != "right";
             right_direction = "right";
         }
-        else if (controller.rightStick.value.x < -0.5f)
+        else if (gamepad_controller.rightStick.value.x < -0.5f)
         {
-            right_stick_changed = right_direction != "left";
             right_direction = "left";
         }
-        else if (controller.rightStick.value.y < -0.5f)
+        else if (gamepad_controller.rightStick.value.y < -0.5f)
         {
-            right_stick_changed = right_direction != "down";
             right_direction = "down";
         }
-        else if (controller.rightStick.value.y > 0.5f)
+        else if (gamepad_controller.rightStick.value.y > 0.5f)
         {
-            right_stick_changed = right_direction != "up";
             right_direction = "up";
         }
         else
         {
-            right_stick_changed = true;
             right_direction = "center";
         }
     }
@@ -334,22 +316,22 @@ public class ArmsController : MonoBehaviour
         if (right_direction == "left")
         {
             right_state = "left";
-            AnimationController.Play("r-l", 1);
+            animator.Play("r-l", 1);
         }
         if (right_direction == "right")
         {
             right_state = "right";
-            AnimationController.Play("r-r", 1);
+            animator.Play("r-r", 1);
         }
         if (right_direction == "up")
         {
             right_state = "up";
-            AnimationController.Play("r-u", 1);
+            animator.Play("r-u", 1);
         }
         if (right_direction == "down")
         {
             right_state = "down";
-            AnimationController.Play("r-d", 1);
+            animator.Play("r-d", 1);
         }
     }
 
@@ -357,19 +339,19 @@ public class ArmsController : MonoBehaviour
     {
         if (right_state == "left")
         {
-            AnimationController.Play("r-l-t", 1);
+            animator.Play("r-l-t", 1);
         }
         if (right_state == "right")
         {
-            AnimationController.Play("r-r-t", 1);
+            animator.Play("r-r-t", 1);
         }
         if (right_state == "up")
         {
-            AnimationController.Play("r-u-t", 1);
+            animator.Play("r-u-t", 1);
         }
         if (right_state == "down")
         {
-            AnimationController.Play("r-d-t", 1);
+            animator.Play("r-d-t", 1);
         }
         right_state = "center";
     }
