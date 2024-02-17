@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 public class ArmsController : MonoBehaviour
@@ -18,28 +19,83 @@ public class ArmsController : MonoBehaviour
     private string left_direction = "center";
     private string right_direction = "center";
     private Gamepad controller;
+    private GameObject MainCamera;
+    float rotationX = 0;
+    public float lookSpeed = 0.50f;
+    public float lookXLimit = 45.0f;
+    CharacterController characterController;
+    private bool move_mode = false;
+
     private void Start()
     {
         controller = Gamepad.current;
+        characterController = GetComponent<CharacterController>();
+        MainCamera = GameObject.Find("Main Camera");
         AnimationController.speed = animation_speed;
     }
+
     void Update()
     {
-
+         var moveDirection = new Vector3(0, 0, 0);
+        if (!characterController.isGrounded)
+        {
+            moveDirection.y += Physics.gravity.y;
+        }
         if (controller != null)
         {
-            _update_left_stick();
-            _update_right_stick();
-            _update_left_hand();
-            _update_right_hand();
-
-            _process_left_arm();
-            _process_right_arm();
+            if (controller.buttonSouth.wasReleasedThisFrame)
+            {
+                _switch_modes();
+            }
+            if (move_mode)
+            {
+                _update_camera_rotation();
+                moveDirection = _get_move_direction(moveDirection);
+            }
+            else
+            {
+                _update_left_stick();
+                _update_right_stick();
+                _update_left_hand();
+                _update_right_hand();
+                _update_left_arm();
+                _update_right_arm();
+            }
         }
         else
         {
             controller = Gamepad.current;
         }
+        characterController.Move(moveDirection * Time.deltaTime);
+    }
+
+    private void _switch_modes()
+    {
+        rotationX = 0;
+        MainCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
+        _center_right_arm();
+        AnimationController.Play("reset", 3);
+        AnimationController.Play("reset", 4);
+        _center_left_arm();
+        move_mode = !move_mode;
+    }
+
+    private Vector3 _get_move_direction(Vector3 moveDirection)
+    {
+        Vector3 forward = transform.TransformDirection(Vector3.forward);
+        Vector3 right = transform.TransformDirection(Vector3.right);
+        moveDirection += (forward * controller.leftStick.value.y) + (right * controller.leftStick.value.x);
+        return moveDirection;
+    }
+
+    private void _update_camera_rotation()
+    {
+        var input_y = Mouse.current.delta.value.y + controller.rightStick.value.y;
+        var input_x = Mouse.current.delta.value.x + controller.rightStick.value.x;
+        rotationX += -input_y * lookSpeed;
+        rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit);
+        MainCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
+        transform.rotation *= Quaternion.Euler(0, input_x * lookSpeed, 0);
     }
 
     private void _update_left_hand()
@@ -54,7 +110,7 @@ public class ArmsController : MonoBehaviour
         }
         else
         {
-            AnimationController.Play("nothin", 4);
+            AnimationController.Play("reset", 4);
         }
     }
 
@@ -71,7 +127,7 @@ public class ArmsController : MonoBehaviour
         }
         else
         {
-            AnimationController.Play("nothin", 3);
+            AnimationController.Play("reset", 3);
         }
     }
 
@@ -96,7 +152,7 @@ public class ArmsController : MonoBehaviour
         }
     }
 
-    private void _process_left_arm()
+    private void _update_left_arm()
     {
         if (_should_center_left_arm())
         {
@@ -139,7 +195,7 @@ public class ArmsController : MonoBehaviour
         }
     }
 
-    private void _process_right_arm()
+    private void _update_right_arm()
     {
         if (_should_center_right_arm())
         {
