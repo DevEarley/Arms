@@ -277,7 +277,7 @@ MonoBehaviour:
     m_Visible: 1
   - m_Transform: {fileID: 1020240299}
     m_Style:
-      shape: {fileID: 4300000, guid: 687b70eb9c49243639f9379f6965034f, type: 2}
+      shape: {fileID: 4300000, guid: c6793350c150f456688e39a81f97364a, type: 2}
       color: {r: 1, g: 0, b: 0, a: 0.5}
       size: 0.1
       position: {x: 0, y: 0, z: 0}
@@ -293,7 +293,7 @@ MonoBehaviour:
     m_Visible: 1
   - m_Transform: {fileID: 1644355007}
     m_Style:
-      shape: {fileID: 4300000, guid: 687b70eb9c49243639f9379f6965034f, type: 2}
+      shape: {fileID: 4300000, guid: c6793350c150f456688e39a81f97364a, type: 2}
       color: {r: 1, g: 0, b: 0, a: 0.5}
       size: 0.1
       position: {x: 0, y: 0, z: 0}
@@ -410,7 +410,7 @@ Transform:
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.032, z: -0.132}
+  m_LocalPosition: {x: 0, y: -0.032, z: -0.03}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -860,6 +860,7 @@ GameObject:
   - component: {fileID: 543450652089025834}
   - component: {fileID: 919132147544547218}
   - component: {fileID: 919132147544547217}
+  - component: {fileID: 919132147544547219}
   m_Layer: 0
   m_Name: FPS ARMS RIG 1
   m_TagString: Untagged
@@ -892,11 +893,11 @@ Animator:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919132147544547216}
   m_Enabled: 1
-  m_Avatar: {fileID: 0}
+  m_Avatar: {fileID: 9000000, guid: e864b45352011604697218cb5a18cd0e, type: 3}
   m_Controller: {fileID: 9100000, guid: 3e4b09fd361e09842854cfd9ab1c7b91, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_WarningMessage: 
@@ -904,6 +905,19 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &919132147544547219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132147544547216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14b5eea406d29c742b6f9f3faadc0199, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AnimationController: {fileID: 919132147544547218}
 --- !u!4 &988796797225203108
 Transform:
   m_ObjectHideFlags: 0
@@ -1405,7 +1419,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2774986114738789839}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
   m_Name: 
@@ -2742,7 +2756,7 @@ SkinnedMeshRenderer:
   m_SortingOrder: 0
   serializedVersion: 2
   m_Quality: 4
-  m_UpdateWhenOffscreen: 0
+  m_UpdateWhenOffscreen: 1
   m_SkinnedMotionVectors: 1
   m_Mesh: {fileID: -5309013825337184931, guid: aaceb9b6506859e42b98d31e3b882dda, type: 3}
   m_Bones:
@@ -2800,7 +2814,7 @@ SkinnedMeshRenderer:
   m_RootBone: {fileID: 6518976699068756510}
   m_AABB:
     m_Center: {x: 0, y: -0.76, z: -1.25}
-    m_Extent: {x: 7.52, y: 5.12, z: 2.99}
+    m_Extent: {x: 10, y: 10, z: 10}
   m_DirtyAABB: 0
 --- !u!1 &8626288480741176362
 GameObject:
@@ -2906,7 +2920,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9182763808421415737}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
   m_Name: 
