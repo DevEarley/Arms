@@ -21,7 +21,7 @@ public class ArmsController : MonoBehaviour
     private float right_timer = 0.0f;
     private float right_timer_cap = 0.25f;
 
-    public Animator animator;
+    private Animator animator;
     private CharacterController character_controller;
     private Gamepad gamepad_controller;
     private GameObject main_camera;
@@ -29,6 +29,7 @@ public class ArmsController : MonoBehaviour
     private void Start()
     {
         gamepad_controller = Gamepad.current;
+        animator = GetComponent<Animator>();
         character_controller = GetComponent<CharacterController>();
         main_camera = GameObject.Find("Main Camera");
         animator.speed = animation_speed;

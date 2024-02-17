@@ -1931,9 +1931,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14b5eea406d29c742b6f9f3faadc0199, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AnimationController: {fileID: 919132147544547218}
-  lookSpeed: 2
-  lookXLimit: 45
+  look_speed: 0.5
+  look_x_limit: 45
+  animator: {fileID: 919132147544547218}
 --- !u!143 &919132147544547220
 CharacterController:
   m_ObjectHideFlags: 0
