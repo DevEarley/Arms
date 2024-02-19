@@ -1,10 +1,18 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+public enum ArmsControllerSymbols
+{
+    Up, Down, Left, Right, Gun, Peace, Default, Love
+}
+
 public class ArmsController : MonoBehaviour
 {
+    public LayerMask DoorTriggerLayerMask;
+    public LayerMask PickupTriggerLayerMask;
     private float rotation_x = 0;
-    private float animation_speed =2.50f;
+    private float animation_speed = 2.50f;
     private bool move_mode = false;
     public float look_speed = 0.50f;
     public float look_x_limit = 45.0f;
@@ -13,7 +21,7 @@ public class ArmsController : MonoBehaviour
     private string left_state = "center";
     private string left_direction = "center";
     private float left_timer = 0.0f;
-    private float left_timer_cap =0.25f;
+    private float left_timer_cap = 0.25f;
 
     private bool right_arm_ready_to_move = true;
     private string right_state = "center";
@@ -21,10 +29,81 @@ public class ArmsController : MonoBehaviour
     private float right_timer = 0.0f;
     private float right_timer_cap = 0.25f;
 
+    private GameObject left_hand_target;
+    private GameObject right_hand_target;
+    private GameObject left_hand_hint;
+    private GameObject right_hand_hint;
+
     private Animator animator;
     private CharacterController character_controller;
     private Gamepad gamepad_controller;
     private GameObject main_camera;
+
+    private GameObject left_side;
+    private GameObject right_side;
+
+    private GameObject left_door_instructions;
+
+    private MeshRenderer left_door_top_directional_symbol_quad;
+    private MeshRenderer left_door_middle_directional_symbol_quad;
+    private MeshRenderer left_door_bottom_directional_symbol_quad;
+
+    private MeshRenderer left_door_top_hand_symbol_quad;
+    private MeshRenderer left_door_middle_hand_symbol_quad;
+    private MeshRenderer left_door_bottom_hand_symbol_quad;
+
+    private MeshRenderer left_door_top_glow_mesh;
+    private MeshRenderer left_door_middle_glow_mesh;
+    private MeshRenderer left_door_bottom_glow_mesh;
+
+    private MeshRenderer right_door_top_directional_symbol_quad;
+    private MeshRenderer right_door_middle_directional_symbol_quad;
+    private MeshRenderer right_door_bottom_directional_symbol_quad;
+
+    private MeshRenderer right_door_top_hand_symbol_quad;
+    private MeshRenderer right_door_middle_hand_symbol_quad;
+    private MeshRenderer right_door_bottom_hand_symbol_quad;
+
+    private MeshRenderer right_door_top_glow_mesh;
+    private MeshRenderer right_door_middle_glow_mesh;
+    private MeshRenderer right_door_bottom_glow_mesh;
+
+    private MeshRenderer player_hammer;
+
+    public Material symbol_up_mat;
+    public Material symbol_down_mat;
+    public Material symbol_left_mat;
+    public Material symbol_right_mat;
+    public Material hand_symbol_peace_mat;
+    public Material hand_symbol_love_mat;
+    public Material hand_symbol_gun_mat;
+    public Material hand_symbol_default_mat;
+
+    private ArmsControllerSymbols left_door_top_directional_symbol;
+    private ArmsControllerSymbols left_door_middle_directional_symbol;
+    private ArmsControllerSymbols left_door_bottom_directional_symbol;
+
+    private ArmsControllerSymbols right_door_top_directional_symbol;
+    private ArmsControllerSymbols right_door_middle_directional_symbol;
+    private ArmsControllerSymbols right_door_bottom_directional_symbol;
+
+    private ArmsControllerSymbols left_door_top_hand_symbol;
+    private ArmsControllerSymbols left_door_middle_hand_symbol;
+    private ArmsControllerSymbols left_door_bottom_hand_symbol;
+
+    private ArmsControllerSymbols right_door_top_hand_symbol;
+    private ArmsControllerSymbols right_door_middle_hand_symbol;
+    private ArmsControllerSymbols right_door_bottom_hand_symbol;
+
+    private bool in_right_magic_square = false;
+    private bool in_left_magic_square = false;
+    private bool in_pickup_trigger = false;
+    private bool looking_at_pickup_trigger = false;
+    private bool holding_hammer = true;
+    private float pickup_min_distance = 10.0f;
+    private Pickup current_pickup_in_focus;
+    private bool pickup_close_enough;
+    private float hammer_pickup_grab_time = 0.5f;
 
     private void Start()
     {
@@ -33,17 +112,32 @@ public class ArmsController : MonoBehaviour
         character_controller = GetComponent<CharacterController>();
         main_camera = GameObject.Find("Main Camera");
         animator.speed = animation_speed;
+        left_side = GameObject.Find("left-door");
+        right_side = GameObject.Find("right-door");
+        left_door_instructions = GameObject.Find("left-door-magic-square").transform.Find("instructions").gameObject;
+        _init_rig();
+        _init_glow_meshes();
+        _init_hand_symbol_quads();
+        _init_directional_symbol_quads();
+        left_side.SetActive(false);
+        left_door_instructions.SetActive(false);
+        right_side.SetActive(false);
     }
 
     void Update()
     {
-         var moveDirection = new Vector3(0, 0, 0);
-        if (!character_controller.isGrounded)
-        {
-            moveDirection.y += Physics.gravity.y;
-        }
+        var moveDirection = new Vector3(0, 0, 0);
+
+        moveDirection = _apply_gravity(moveDirection);
+
         if (gamepad_controller != null)
         {
+            _look_for_pickups();
+
+            if (_should_pickup_hammer())
+            {
+                StartCoroutine(_pickup_hammer());
+            }
             if (gamepad_controller.buttonSouth.wasReleasedThisFrame)
             {
                 _switch_modes();
@@ -67,11 +161,168 @@ public class ArmsController : MonoBehaviour
         {
             gamepad_controller = Gamepad.current;
         }
+
         character_controller.Move(moveDirection * Time.deltaTime);
+    }
+
+    private Vector3 _apply_gravity(Vector3 moveDirection)
+    {
+        if (!character_controller.isGrounded)
+        {
+            moveDirection.y += Physics.gravity.y;
+        }
+
+        return moveDirection;
+    }
+
+    private bool _should_pickup_hammer()
+    {
+        return pickup_close_enough && move_mode && looking_at_pickup_trigger && gamepad_controller.buttonEast.wasReleasedThisFrame && holding_hammer == false;
+    }
+    
+    private void _init_rig()
+    {
+        left_hand_target = GameObject.Find("LeftArmIK_target");
+        right_hand_target = GameObject.Find("RightArmIK_target");
+        left_hand_hint = GameObject.Find("LeftArmIK_hint");
+        right_hand_hint = GameObject.Find("RightArmIK_hint");
+    }
+
+    private IEnumerator _pickup_hammer()
+    {
+        Debug.Log("Pickup Hammer");
+        current_pickup_in_focus._on_pickup();
+        holding_hammer = true;
+        left_hand_target.transform.position = current_pickup_in_focus.transform.position;
+        player_hammer.enabled = true;
+        yield return new WaitForSeconds(hammer_pickup_grab_time);
+        // set hand target to pickup
+        // play animation that lerps the weight. 
+        // change hand animation
+        // show hammer in hand, hide hammer in world.
+        // lerp hand target back to OG position
+        // play hammer idle animation. 
+        //animator.Play("hammer-idle");
+    }
+
+    private Material _get_material_for_direction(ArmsControllerSymbols ArmsControllerSymbol)
+    {
+        switch (ArmsControllerSymbol)
+        {
+            default:
+            case ArmsControllerSymbols.Up:
+                return symbol_up_mat;
+            case ArmsControllerSymbols.Down:
+                return symbol_down_mat;
+            case ArmsControllerSymbols.Left:
+                return symbol_left_mat;
+            case ArmsControllerSymbols.Right:
+                return symbol_right_mat;
+        }
+    }
+
+    private Material _get_material_for_hand(ArmsControllerSymbols ArmsControllerSymbol)
+    {
+        switch (ArmsControllerSymbol)
+        {
+            default:
+            case ArmsControllerSymbols.Default:
+                return hand_symbol_default_mat;
+            case ArmsControllerSymbols.Gun:
+                return hand_symbol_gun_mat;
+            case ArmsControllerSymbols.Peace:
+                return hand_symbol_peace_mat;
+            case ArmsControllerSymbols.Love:
+                return hand_symbol_love_mat;
+        }
+    }
+
+    private void _init_glow_meshes()
+    {
+        left_door_top_glow_mesh = GameObject.Find("left-door-top-symbol").GetComponent<MeshRenderer>();
+        left_door_middle_glow_mesh = GameObject.Find("left-door-middle-symbol").GetComponent<MeshRenderer>();
+        left_door_bottom_glow_mesh = GameObject.Find("left-door-bottom-symbol").GetComponent<MeshRenderer>();
+
+        right_door_top_glow_mesh = GameObject.Find("right-door-top-symbol").GetComponent<MeshRenderer>();
+        right_door_middle_glow_mesh = GameObject.Find("right-door-middle-symbol").GetComponent<MeshRenderer>();
+        right_door_bottom_glow_mesh = GameObject.Find("right-door-bottom-symbol").GetComponent<MeshRenderer>();
+
+    }
+
+    private void _init_hand_symbol_quads()
+    {
+
+        left_door_top_hand_symbol_quad = GameObject.Find("left-door-top-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
+        left_door_middle_hand_symbol_quad = GameObject.Find("left-door-middle-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
+        left_door_bottom_hand_symbol_quad = GameObject.Find("left-door-bottom-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
+
+        right_door_top_hand_symbol_quad = GameObject.Find("right-door-top-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
+        right_door_middle_hand_symbol_quad = GameObject.Find("right-door-middle-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
+        right_door_bottom_hand_symbol_quad = GameObject.Find("right-door-bottom-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
+
+        left_door_top_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
+        left_door_middle_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
+        left_door_bottom_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
+
+        right_door_top_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
+        right_door_middle_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
+        right_door_bottom_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
+
+    }
+
+    private void _init_directional_symbol_quads()
+    {
+        left_door_top_directional_symbol_quad = GameObject.Find("left-door-top-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
+        left_door_middle_directional_symbol_quad = GameObject.Find("left-door-middle-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
+        left_door_bottom_directional_symbol_quad = GameObject.Find("left-door-bottom-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
+
+        right_door_top_directional_symbol_quad = GameObject.Find("right-door-top-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
+        right_door_middle_directional_symbol_quad = GameObject.Find("right-door-middle-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
+        right_door_bottom_directional_symbol_quad = GameObject.Find("right-door-bottom-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
+
+        left_door_top_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
+        left_door_middle_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
+        left_door_bottom_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
+
+        right_door_top_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
+        right_door_middle_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
+        right_door_bottom_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
+
+    }
+
+    private void _look_for_pickups()
+    {
+        var hit = new RaycastHit();
+        if(Physics.Raycast(transform.position, main_camera.transform.forward, out hit, 9999.0f, PickupTriggerLayerMask))
+        {
+            if(Vector3.Distance(transform.position, hit.collider.gameObject.transform.position) < pickup_min_distance)
+            {
+                pickup_close_enough = true;
+            }
+            else
+            {
+                pickup_close_enough = false;
+            }
+            current_pickup_in_focus = hit.collider.gameObject.GetComponent<Pickup>();
+            current_pickup_in_focus._on_look_at();
+            looking_at_pickup_trigger = true;
+        }
+        else
+        {
+            if(current_pickup_in_focus != null)
+            {
+                current_pickup_in_focus._on_look_away();
+                current_pickup_in_focus = null;
+            }
+            pickup_close_enough = false;
+            looking_at_pickup_trigger = false;
+        }
     }
 
     private void _switch_modes()
     {
+        Debug.Log("_switch_modes");
+
         rotation_x = 0;
         main_camera.transform.localRotation = Quaternion.Euler(rotation_x, 0, 0);
         _center_right_arm();
@@ -79,6 +330,24 @@ public class ArmsController : MonoBehaviour
         animator.Play("reset", 4);
         _center_left_arm();
         move_mode = !move_mode;
+
+        if (move_mode)
+        {
+            left_side.SetActive(false);
+            right_side.SetActive(false);
+            if (in_left_magic_square)
+                left_door_instructions.SetActive(true);
+        }
+        else
+        {
+            if (in_left_magic_square)
+            {
+                Debug.Log("_switch_modes | in_left_magic_square");
+                left_side.SetActive(true);
+                left_door_instructions.SetActive(false);
+                right_side.SetActive(true);
+            }
+        }
     }
 
     private Vector3 _get_move_direction(Vector3 moveDirection)
@@ -101,13 +370,17 @@ public class ArmsController : MonoBehaviour
 
     private void _update_left_hand()
     {
-        if (gamepad_controller.leftShoulder.value > 0)
+        if (gamepad_controller.leftShoulder.value > 0.0 && gamepad_controller.leftTrigger.value == 0.0)
         {
             animator.Play("l-hand-1", 4);
         }
-        else if (gamepad_controller.leftTrigger.value > 0)
+        else if (gamepad_controller.leftTrigger.value > 0 && gamepad_controller.leftShoulder.value == 0.0)
         {
             animator.Play("l-hand-2", 4);
+        }
+        else if (gamepad_controller.leftTrigger.value > 0 && gamepad_controller.leftShoulder.value > 0.0)
+        {
+            animator.Play("l-hand-3", 4);
         }
         else
         {
@@ -117,13 +390,17 @@ public class ArmsController : MonoBehaviour
 
     private void _update_right_hand()
     {
-        if (gamepad_controller.rightShoulder.isPressed  )
+        if (gamepad_controller.rightShoulder.value > 0.0 && gamepad_controller.rightTrigger.value == 0.0)
         {
             animator.Play("r-hand-1", 3);
         }
-        else if (gamepad_controller.rightTrigger.isPressed )
+        else if (gamepad_controller.rightTrigger.value > 0 && gamepad_controller.rightShoulder.value == 0.0)
         {
             animator.Play("r-hand-2", 3);
+        }
+        else if (gamepad_controller.rightTrigger.value > 0 && gamepad_controller.rightShoulder.value > 0.0)
+        {
+            animator.Play("r-hand-3", 3);
         }
         else
         {
@@ -133,7 +410,7 @@ public class ArmsController : MonoBehaviour
 
     private bool _should_center_left_arm()
     {
-        return left_arm_ready_to_move == true &&  left_state !="center" && (left_direction == "center" || left_state!= left_direction) ;
+        return left_arm_ready_to_move == true && left_state != "center" && (left_direction == "center" || left_state != left_direction);
     }
 
     private bool _should_animate_left_arm()
@@ -156,21 +433,17 @@ public class ArmsController : MonoBehaviour
         if (_should_center_left_arm())
         {
             left_arm_ready_to_move = false;
-            Debug.Log("_should_center_left_arm == true");
-            Debug.Log($"state | {left_state} | direction | {left_direction}");
+
             _center_left_arm();
         }
         else if (_should_animate_left_arm())
         {
             left_arm_ready_to_move = false;
-            Debug.Log("_should_animate_left_arm == true");
-            Debug.Log($"state | {left_state} | direction | {left_direction}");
             _animate_left_arm();
         }
         if (left_arm_ready_to_move == false)
         {
             _run_left_timer();
-            Debug.Log("_should_run_left_timer == true");
         }
     }
 
@@ -199,21 +472,16 @@ public class ArmsController : MonoBehaviour
         if (_should_center_right_arm())
         {
             right_arm_ready_to_move = false;
-            Debug.Log("_should_center_right_arm == true");
-            Debug.Log($"state | {right_state} | direction | {right_direction}");
             _center_right_arm();
         }
         else if (_should_animate_right_arm())
         {
             right_arm_ready_to_move = false;
-            Debug.Log("_should_animate_right_arm == true");
-            Debug.Log($"state | {right_state} | direction | {right_direction}");
             _animate_right_arm();
         }
         if (right_arm_ready_to_move == false)
         {
             _run_right_timer();
-            Debug.Log("_should_run_right_timer == true");
         }
     }
 
@@ -287,7 +555,7 @@ public class ArmsController : MonoBehaviour
         }
         left_state = "center";
     }
-  
+
     private void _update_right_stick()
     {
         if (gamepad_controller.rightStick.value.x > 0.5f)
@@ -355,5 +623,37 @@ public class ArmsController : MonoBehaviour
             animator.Play("r-d-t", 1);
         }
         right_state = "center";
+    }
+
+    public void _on_enter_magic_square(GameObject other)
+    {
+        Debug.Log("_OnTriggerEnter");
+        var magic_square = other.gameObject.GetComponent<MagicSquare>();
+        left_door_instructions.SetActive(true);
+        in_left_magic_square = true;
+        //right_door_instructions.SetActive(true);
+        in_right_magic_square = true;
+    }
+
+    public void _on_exit_magic_square(GameObject other)
+    {
+        Debug.Log("_OnTriggerExit");
+        var magic_square = other.gameObject.GetComponent<MagicSquare>();
+        left_side.SetActive(false);
+        left_door_instructions.SetActive(false);
+        in_left_magic_square = false;
+        right_side.SetActive(false);
+      //  right_door_instructions.SetActive(false);
+        in_right_magic_square = false;
+    }
+
+    public void _on_enter_pickup(Pickup pickup)
+    {
+        in_pickup_trigger = true;
+    }
+
+    public void _on_exit_pickup(Pickup pickup)
+    {
+        in_pickup_trigger = false;
     }
 }
