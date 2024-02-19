@@ -99,11 +99,12 @@ public class ArmsController : MonoBehaviour
     private bool in_left_magic_square = false;
     private bool in_pickup_trigger = false;
     private bool looking_at_pickup_trigger = false;
-    private bool holding_hammer = true;
-    private float pickup_min_distance = 10.0f;
+    private bool holding_hammer = false;
+    private float pickup_min_distance = 2.0f;
     private Pickup current_pickup_in_focus;
     private bool pickup_close_enough;
-    private float hammer_pickup_grab_time = 0.5f;
+    private float hammer_pickup_grab_time = 2.5f;
+    private float hammer_pickup_grab_time_left = 2.5f;
 
     private void Start()
     {
@@ -115,6 +116,7 @@ public class ArmsController : MonoBehaviour
         left_side = GameObject.Find("left-door");
         right_side = GameObject.Find("right-door");
         left_door_instructions = GameObject.Find("left-door-magic-square").transform.Find("instructions").gameObject;
+        player_hammer = GameObject.Find("player-hammer").GetComponent<MeshRenderer>();
         _init_rig();
         _init_glow_meshes();
         _init_hand_symbol_quads();
@@ -130,6 +132,12 @@ public class ArmsController : MonoBehaviour
 
         moveDirection = _apply_gravity(moveDirection);
 
+        if (animating_pickup) {
+            hammer_pickup_grab_time_left -= Time.deltaTime;
+           var delta =  hammer_pickup_grab_time_left / hammer_pickup_grab_time;
+            delta = 1.0f - delta;
+            right_hand_target.transform.position = Vector3.Lerp(right_hand_target.transform.position, current_pickup_in_focus.transform.position, delta);
+        };
         if (gamepad_controller != null)
         {
             _look_for_pickups();
@@ -188,14 +196,23 @@ public class ArmsController : MonoBehaviour
         right_hand_hint = GameObject.Find("RightArmIK_hint");
     }
 
+    private bool animating_pickup = false;
+
     private IEnumerator _pickup_hammer()
     {
         Debug.Log("Pickup Hammer");
+        animator.Play("r-t-pose", 0);
+        animator.Play("r-hand-hammer-swing", 5);
+
+        animating_pickup = true;
+        yield return new WaitForSeconds(hammer_pickup_grab_time);
         current_pickup_in_focus._on_pickup();
         holding_hammer = true;
-        left_hand_target.transform.position = current_pickup_in_focus.transform.position;
+        animating_pickup = false;
+        animator.Play("t-pose", 0);
         player_hammer.enabled = true;
-        yield return new WaitForSeconds(hammer_pickup_grab_time);
+        Debug.Log("Pickup Hammer - DONE");
+
         // set hand target to pickup
         // play animation that lerps the weight. 
         // change hand animation
@@ -298,25 +315,20 @@ public class ArmsController : MonoBehaviour
             if(Vector3.Distance(transform.position, hit.collider.gameObject.transform.position) < pickup_min_distance)
             {
                 pickup_close_enough = true;
+                current_pickup_in_focus = hit.collider.gameObject.GetComponent<Pickup>();
+                current_pickup_in_focus._on_look_at();
+                looking_at_pickup_trigger = true;
+                return;
             }
-            else
-            {
-                pickup_close_enough = false;
-            }
-            current_pickup_in_focus = hit.collider.gameObject.GetComponent<Pickup>();
-            current_pickup_in_focus._on_look_at();
-            looking_at_pickup_trigger = true;
+  
         }
-        else
+        if(current_pickup_in_focus != null)
         {
-            if(current_pickup_in_focus != null)
-            {
-                current_pickup_in_focus._on_look_away();
-                current_pickup_in_focus = null;
-            }
-            pickup_close_enough = false;
-            looking_at_pickup_trigger = false;
+            current_pickup_in_focus._on_look_away();
+            current_pickup_in_focus = null;
         }
+        pickup_close_enough = false;
+        looking_at_pickup_trigger = false;
     }
 
     private void _switch_modes()
