@@ -174,6 +174,9 @@ public class MagicSquare : MonoBehaviour
 
     public void _on_enter_magic_square()
     {
+        left_side.SetActive(true);
+        right_side.SetActive(true);
+  
         //if (move_mode)
         //{
         //    left_side.SetActive(false);
@@ -192,7 +195,7 @@ public class MagicSquare : MonoBehaviour
         //    }
         //}
         Debug.Log("_OnTriggerEnter");
-        left_door_instructions.SetActive(true);
+     
         //in_left_magic_square = true;
         ////right_door_instructions.SetActive(true);
         //in_right_magic_square = true;

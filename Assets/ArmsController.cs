@@ -49,7 +49,7 @@ public class ArmsController : MonoBehaviour
     private bool in_pickup_trigger = false;
     private bool looking_at_pickup_trigger = false;
     private bool holding_hammer = false;
-    private float pickup_min_distance = 1.0f;
+    private float pickup_min_distance = 2.0f;
     private Pickup current_pickup_in_focus;
     private bool pickup_close_enough;
     private float hammer_pickup_grab_time = 0.5f;
@@ -59,7 +59,7 @@ public class ArmsController : MonoBehaviour
     private void Start()
     {
         gamepad_controller = Gamepad.current;
-        animator = GetComponent<Animator>();
+        animator = GameObject.Find("arm-rig").GetComponent<Animator>();
         character_controller = GetComponent<CharacterController>();
         main_camera = GameObject.Find("Main Camera");
         animator.speed = animation_speed;
@@ -240,7 +240,7 @@ public class ArmsController : MonoBehaviour
         Debug.Log("_switch_modes");
 
         rotation_x = 0;
-        main_camera.transform.localRotation = Quaternion.Euler(rotation_x, 0, 0);
+       // main_camera.transform.localRotation = Quaternion.Euler(rotation_x, 0, 0);
         _center_right_arm();
         animator.Play("reset", 3);
         animator.Play("reset", 4);
@@ -265,6 +265,7 @@ public class ArmsController : MonoBehaviour
         rotation_x += -input_y * look_speed;
         rotation_x = Mathf.Clamp(rotation_x, -look_x_limit, look_x_limit);
         main_camera.transform.localRotation = Quaternion.Euler(rotation_x, 0, 0);
+    
         transform.rotation *= Quaternion.Euler(0, input_x * look_speed, 0);
     }
 
