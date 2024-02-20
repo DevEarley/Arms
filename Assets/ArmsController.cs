@@ -9,11 +9,12 @@ public enum ArmsControllerSymbols
 
 public class ArmsController : MonoBehaviour
 {
+    public LayerMask EnvironmentLayerMask;
     public LayerMask DoorTriggerLayerMask;
     public LayerMask PickupTriggerLayerMask;
     private float rotation_x = 0;
     private float animation_speed = 2.50f;
-    private bool move_mode = false;
+    private bool move_mode = true;
     public float look_speed = 0.750f;
     public float look_x_limit = 45.0f;
 
@@ -31,6 +32,8 @@ public class ArmsController : MonoBehaviour
 
     private GameObject left_hand_target;
     private GameObject right_hand_target;
+    public GameObject left_hand_raycast_origin;
+    public GameObject right_hand_raycast_origin;
     private GameObject left_hand_hint;
     private GameObject right_hand_hint;
 
@@ -71,19 +74,11 @@ public class ArmsController : MonoBehaviour
 
         moveDirection = _apply_gravity(moveDirection);
 
-        if (animating_pickup && current_pickup_in_focus != null) {
-            hammer_pickup_grab_time_left -= Time.deltaTime;
-            var delta =  hammer_pickup_grab_time_left / hammer_pickup_grab_time;
-            delta = 1.0f - delta;
-            right_hand_target.transform.position = Vector3.Lerp(right_hand_target.transform.position, current_pickup_in_focus.transform.position, delta);
-        }
-        else if (animating_pickup && current_pickup_in_focus != null)
-        {
-            hammer_pickup_grab_time_left = hammer_pickup_grab_time;
-            animating_pickup = false;
-        }
+        _update_pickup_process();
 
-            if (gamepad_controller != null)
+        _update_raycast_for_walls();
+
+        if (gamepad_controller != null)
         {
             _look_for_pickups();
 
@@ -91,7 +86,7 @@ public class ArmsController : MonoBehaviour
             {
                 StartCoroutine(_pickup_hammer());
             }
-            if (gamepad_controller.buttonSouth.wasReleasedThisFrame)
+            if (gamepad_controller.buttonSouth.wasReleasedThisFrame && in_magic_square)
             {
                 _switch_modes();
             }
@@ -117,6 +112,54 @@ public class ArmsController : MonoBehaviour
         }
 
         character_controller.Move(moveDirection * Time.deltaTime);
+    }
+
+    private void _update_raycast_for_walls()
+    {
+        point_in_front_of_left_hand = _raycast_in_front_of_hand(left_hand_raycast_origin);
+        point_in_front_of_right_hand = _raycast_in_front_of_hand(right_hand_raycast_origin);
+        something_in_front_of_left_hand = point_in_front_of_left_hand != null;
+        something_in_front_of_right_hand = point_in_front_of_right_hand != null;
+        if (something_in_front_of_left_hand)
+        {
+            animator.Play("l-t-pose", 0);
+            left_hand_target.transform.position = point_in_front_of_left_hand.Value;
+        }
+       else if (something_in_front_of_right_hand)
+        {
+            animator.Play("r-t-pose", 0);
+            right_hand_target.transform.position = point_in_front_of_right_hand.Value;
+        }
+
+    }
+    private bool something_in_front_of_left_hand;
+    private bool something_in_front_of_right_hand;
+    private Vector3? point_in_front_of_left_hand;
+    private Vector3? point_in_front_of_right_hand;
+    private Vector3? _raycast_in_front_of_hand(GameObject origin)
+    {
+        var RaycastHit = new RaycastHit();
+        if (Physics.Raycast(origin.transform.position, origin.transform.forward, out RaycastHit, 1.0f, EnvironmentLayerMask))
+        {
+            return RaycastHit.point;
+        }
+        return null;
+    }
+
+    private void _update_pickup_process()
+    {
+        if (animating_pickup && current_pickup_in_focus != null)
+        {
+            hammer_pickup_grab_time_left -= Time.deltaTime;
+            var delta = hammer_pickup_grab_time_left / hammer_pickup_grab_time;
+            delta = 1.0f - delta;
+            right_hand_target.transform.position = Vector3.Lerp(right_hand_target.transform.position, current_pickup_in_focus.transform.position, delta);
+        }
+        else if (animating_pickup && current_pickup_in_focus != null)
+        {
+            hammer_pickup_grab_time_left = hammer_pickup_grab_time;
+            animating_pickup = false;
+        }
     }
 
     private Vector3 _apply_gravity(Vector3 moveDirection)

@@ -1519,6 +1519,37 @@ MonoBehaviour:
   hand_symbol_love_mat: {fileID: 0}
   hand_symbol_gun_mat: {fileID: 0}
   hand_symbol_default_mat: {fileID: 0}
+--- !u!1 &471368979
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 471368980}
+  m_Layer: 7
+  m_Name: left-hand-raycast-origin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &471368980
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 471368979}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.3, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 543450652089025834}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &514265261
 GameObject:
   m_ObjectHideFlags: 0
@@ -1602,6 +1633,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 514265261}
   m_Mesh: {fileID: -4727834833268806527, guid: dfa1aca97397fee4e93c126c1f87b3a2, type: 3}
+--- !u!1 &536788323
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 536788324}
+  m_Layer: 7
+  m_Name: right-hand-raycast-origin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &536788324
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 536788323}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.3, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 543450652089025834}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &561130627
 GameObject:
   m_ObjectHideFlags: 0
@@ -4660,6 +4722,8 @@ Transform:
   - {fileID: 6518976699068756510}
   - {fileID: 8294994144012453322}
   - {fileID: 714272119}
+  - {fileID: 471368980}
+  - {fileID: 536788324}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 89.755, z: 0}
 --- !u!4 &588048791734367852
@@ -4841,6 +4905,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14b5eea406d29c742b6f9f3faadc0199, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  EnvironmentLayerMask:
+    serializedVersion: 2
+    m_Bits: 256
   DoorTriggerLayerMask:
     serializedVersion: 2
     m_Bits: 8
@@ -4849,6 +4916,8 @@ MonoBehaviour:
     m_Bits: 64
   look_speed: 0.5
   look_x_limit: 45
+  left_hand_raycast_origin: {fileID: 471368979}
+  right_hand_raycast_origin: {fileID: 536788323}
 --- !u!143 &919132147544547220
 CharacterController:
   m_ObjectHideFlags: 0
