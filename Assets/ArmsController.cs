@@ -100,11 +100,11 @@ public class ArmsController : MonoBehaviour
     private bool in_pickup_trigger = false;
     private bool looking_at_pickup_trigger = false;
     private bool holding_hammer = false;
-    private float pickup_min_distance = 2.0f;
+    private float pickup_min_distance = 1.0f;
     private Pickup current_pickup_in_focus;
     private bool pickup_close_enough;
-    private float hammer_pickup_grab_time = 2.5f;
-    private float hammer_pickup_grab_time_left = 2.5f;
+    private float hammer_pickup_grab_time = 0.5f;
+    private float hammer_pickup_grab_time_left = 0.5f;
 
     private void Start()
     {
