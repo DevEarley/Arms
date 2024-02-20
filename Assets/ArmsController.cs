@@ -14,7 +14,7 @@ public class ArmsController : MonoBehaviour
     private float rotation_x = 0;
     private float animation_speed = 2.50f;
     private bool move_mode = false;
-    public float look_speed = 0.50f;
+    public float look_speed = 0.750f;
     public float look_x_limit = 45.0f;
 
     private bool left_arm_ready_to_move = true;
@@ -39,64 +39,10 @@ public class ArmsController : MonoBehaviour
     private Gamepad gamepad_controller;
     private GameObject main_camera;
 
-    private GameObject left_side;
-    private GameObject right_side;
-
-    private GameObject left_door_instructions;
-
-    private MeshRenderer left_door_top_directional_symbol_quad;
-    private MeshRenderer left_door_middle_directional_symbol_quad;
-    private MeshRenderer left_door_bottom_directional_symbol_quad;
-
-    private MeshRenderer left_door_top_hand_symbol_quad;
-    private MeshRenderer left_door_middle_hand_symbol_quad;
-    private MeshRenderer left_door_bottom_hand_symbol_quad;
-
-    private MeshRenderer left_door_top_glow_mesh;
-    private MeshRenderer left_door_middle_glow_mesh;
-    private MeshRenderer left_door_bottom_glow_mesh;
-
-    private MeshRenderer right_door_top_directional_symbol_quad;
-    private MeshRenderer right_door_middle_directional_symbol_quad;
-    private MeshRenderer right_door_bottom_directional_symbol_quad;
-
-    private MeshRenderer right_door_top_hand_symbol_quad;
-    private MeshRenderer right_door_middle_hand_symbol_quad;
-    private MeshRenderer right_door_bottom_hand_symbol_quad;
-
-    private MeshRenderer right_door_top_glow_mesh;
-    private MeshRenderer right_door_middle_glow_mesh;
-    private MeshRenderer right_door_bottom_glow_mesh;
-
+ 
     private MeshRenderer player_hammer;
 
-    public Material symbol_up_mat;
-    public Material symbol_down_mat;
-    public Material symbol_left_mat;
-    public Material symbol_right_mat;
-    public Material hand_symbol_peace_mat;
-    public Material hand_symbol_love_mat;
-    public Material hand_symbol_gun_mat;
-    public Material hand_symbol_default_mat;
-
-    private ArmsControllerSymbols left_door_top_directional_symbol;
-    private ArmsControllerSymbols left_door_middle_directional_symbol;
-    private ArmsControllerSymbols left_door_bottom_directional_symbol;
-
-    private ArmsControllerSymbols right_door_top_directional_symbol;
-    private ArmsControllerSymbols right_door_middle_directional_symbol;
-    private ArmsControllerSymbols right_door_bottom_directional_symbol;
-
-    private ArmsControllerSymbols left_door_top_hand_symbol;
-    private ArmsControllerSymbols left_door_middle_hand_symbol;
-    private ArmsControllerSymbols left_door_bottom_hand_symbol;
-
-    private ArmsControllerSymbols right_door_top_hand_symbol;
-    private ArmsControllerSymbols right_door_middle_hand_symbol;
-    private ArmsControllerSymbols right_door_bottom_hand_symbol;
-
-    private bool in_right_magic_square = false;
-    private bool in_left_magic_square = false;
+    private bool in_magic_square = false;
     private bool in_pickup_trigger = false;
     private bool looking_at_pickup_trigger = false;
     private bool holding_hammer = false;
@@ -105,6 +51,7 @@ public class ArmsController : MonoBehaviour
     private bool pickup_close_enough;
     private float hammer_pickup_grab_time = 0.5f;
     private float hammer_pickup_grab_time_left = 0.5f;
+    private float move_speed = 200.5f;
 
     private void Start()
     {
@@ -113,17 +60,9 @@ public class ArmsController : MonoBehaviour
         character_controller = GetComponent<CharacterController>();
         main_camera = GameObject.Find("Main Camera");
         animator.speed = animation_speed;
-        left_side = GameObject.Find("left-door");
-        right_side = GameObject.Find("right-door");
-        left_door_instructions = GameObject.Find("left-door-magic-square").transform.Find("instructions").gameObject;
         player_hammer = GameObject.Find("player-hammer").GetComponent<MeshRenderer>();
         _init_rig();
-        _init_glow_meshes();
-        _init_hand_symbol_quads();
-        _init_directional_symbol_quads();
-        left_side.SetActive(false);
-        left_door_instructions.SetActive(false);
-        right_side.SetActive(false);
+ 
     }
 
     void Update()
@@ -132,13 +71,19 @@ public class ArmsController : MonoBehaviour
 
         moveDirection = _apply_gravity(moveDirection);
 
-        if (animating_pickup) {
+        if (animating_pickup && current_pickup_in_focus != null) {
             hammer_pickup_grab_time_left -= Time.deltaTime;
-           var delta =  hammer_pickup_grab_time_left / hammer_pickup_grab_time;
+            var delta =  hammer_pickup_grab_time_left / hammer_pickup_grab_time;
             delta = 1.0f - delta;
             right_hand_target.transform.position = Vector3.Lerp(right_hand_target.transform.position, current_pickup_in_focus.transform.position, delta);
-        };
-        if (gamepad_controller != null)
+        }
+        else if (animating_pickup && current_pickup_in_focus != null)
+        {
+            hammer_pickup_grab_time_left = hammer_pickup_grab_time;
+            animating_pickup = false;
+        }
+
+            if (gamepad_controller != null)
         {
             _look_for_pickups();
 
@@ -154,6 +99,7 @@ public class ArmsController : MonoBehaviour
             {
                 _update_camera_rotation();
                 moveDirection = _get_move_direction(moveDirection);
+                moveDirection *= move_speed * Time.deltaTime;
             }
             else
             {
@@ -206,106 +152,21 @@ public class ArmsController : MonoBehaviour
 
         animating_pickup = true;
         yield return new WaitForSeconds(hammer_pickup_grab_time);
-        current_pickup_in_focus._on_pickup();
-        holding_hammer = true;
-        animating_pickup = false;
-        animator.Play("t-pose", 0);
-        player_hammer.enabled = true;
-        Debug.Log("Pickup Hammer - DONE");
-
-        // set hand target to pickup
-        // play animation that lerps the weight. 
-        // change hand animation
-        // show hammer in hand, hide hammer in world.
-        // lerp hand target back to OG position
-        // play hammer idle animation. 
-        //animator.Play("hammer-idle");
-    }
-
-    private Material _get_material_for_direction(ArmsControllerSymbols ArmsControllerSymbol)
-    {
-        switch (ArmsControllerSymbol)
+        if(current_pickup_in_focus == null)
         {
-            default:
-            case ArmsControllerSymbols.Up:
-                return symbol_up_mat;
-            case ArmsControllerSymbols.Down:
-                return symbol_down_mat;
-            case ArmsControllerSymbols.Left:
-                return symbol_left_mat;
-            case ArmsControllerSymbols.Right:
-                return symbol_right_mat;
+            animating_pickup = false;   
+        }
+        else
+        {
+            current_pickup_in_focus._on_pickup();
+            holding_hammer = true;
+            animating_pickup = false;
+            animator.Play("t-pose", 0);
+            player_hammer.enabled = true;
+            Debug.Log("Pickup Hammer - DONE");
         }
     }
 
-    private Material _get_material_for_hand(ArmsControllerSymbols ArmsControllerSymbol)
-    {
-        switch (ArmsControllerSymbol)
-        {
-            default:
-            case ArmsControllerSymbols.Default:
-                return hand_symbol_default_mat;
-            case ArmsControllerSymbols.Gun:
-                return hand_symbol_gun_mat;
-            case ArmsControllerSymbols.Peace:
-                return hand_symbol_peace_mat;
-            case ArmsControllerSymbols.Love:
-                return hand_symbol_love_mat;
-        }
-    }
-
-    private void _init_glow_meshes()
-    {
-        left_door_top_glow_mesh = GameObject.Find("left-door-top-symbol").GetComponent<MeshRenderer>();
-        left_door_middle_glow_mesh = GameObject.Find("left-door-middle-symbol").GetComponent<MeshRenderer>();
-        left_door_bottom_glow_mesh = GameObject.Find("left-door-bottom-symbol").GetComponent<MeshRenderer>();
-
-        right_door_top_glow_mesh = GameObject.Find("right-door-top-symbol").GetComponent<MeshRenderer>();
-        right_door_middle_glow_mesh = GameObject.Find("right-door-middle-symbol").GetComponent<MeshRenderer>();
-        right_door_bottom_glow_mesh = GameObject.Find("right-door-bottom-symbol").GetComponent<MeshRenderer>();
-
-    }
-
-    private void _init_hand_symbol_quads()
-    {
-
-        left_door_top_hand_symbol_quad = GameObject.Find("left-door-top-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
-        left_door_middle_hand_symbol_quad = GameObject.Find("left-door-middle-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
-        left_door_bottom_hand_symbol_quad = GameObject.Find("left-door-bottom-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
-
-        right_door_top_hand_symbol_quad = GameObject.Find("right-door-top-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
-        right_door_middle_hand_symbol_quad = GameObject.Find("right-door-middle-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
-        right_door_bottom_hand_symbol_quad = GameObject.Find("right-door-bottom-symbol").transform.Find("hand-symbol").gameObject.GetComponent<MeshRenderer>();
-
-        left_door_top_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
-        left_door_middle_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
-        left_door_bottom_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
-
-        right_door_top_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
-        right_door_middle_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
-        right_door_bottom_hand_symbol_quad.material = _get_material_for_hand(ArmsControllerSymbols.Default);
-
-    }
-
-    private void _init_directional_symbol_quads()
-    {
-        left_door_top_directional_symbol_quad = GameObject.Find("left-door-top-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
-        left_door_middle_directional_symbol_quad = GameObject.Find("left-door-middle-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
-        left_door_bottom_directional_symbol_quad = GameObject.Find("left-door-bottom-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
-
-        right_door_top_directional_symbol_quad = GameObject.Find("right-door-top-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
-        right_door_middle_directional_symbol_quad = GameObject.Find("right-door-middle-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
-        right_door_bottom_directional_symbol_quad = GameObject.Find("right-door-bottom-symbol").transform.Find("door-symbol").gameObject.GetComponent<MeshRenderer>();
-
-        left_door_top_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
-        left_door_middle_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
-        left_door_bottom_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
-
-        right_door_top_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
-        right_door_middle_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
-        right_door_bottom_directional_symbol_quad.material = _get_material_for_direction(ArmsControllerSymbols.Up);
-
-    }
 
     private void _look_for_pickups()
     {
@@ -343,23 +204,7 @@ public class ArmsController : MonoBehaviour
         _center_left_arm();
         move_mode = !move_mode;
 
-        if (move_mode)
-        {
-            left_side.SetActive(false);
-            right_side.SetActive(false);
-            if (in_left_magic_square)
-                left_door_instructions.SetActive(true);
-        }
-        else
-        {
-            if (in_left_magic_square)
-            {
-                Debug.Log("_switch_modes | in_left_magic_square");
-                left_side.SetActive(true);
-                left_door_instructions.SetActive(false);
-                right_side.SetActive(true);
-            }
-        }
+
     }
 
     private Vector3 _get_move_direction(Vector3 moveDirection)
@@ -640,23 +485,14 @@ public class ArmsController : MonoBehaviour
     public void _on_enter_magic_square(GameObject other)
     {
         Debug.Log("_OnTriggerEnter");
-        var magic_square = other.gameObject.GetComponent<MagicSquare>();
-        left_door_instructions.SetActive(true);
-        in_left_magic_square = true;
-        //right_door_instructions.SetActive(true);
-        in_right_magic_square = true;
+        in_magic_square = true;
+
     }
 
     public void _on_exit_magic_square(GameObject other)
     {
         Debug.Log("_OnTriggerExit");
-        var magic_square = other.gameObject.GetComponent<MagicSquare>();
-        left_side.SetActive(false);
-        left_door_instructions.SetActive(false);
-        in_left_magic_square = false;
-        right_side.SetActive(false);
-      //  right_door_instructions.SetActive(false);
-        in_right_magic_square = false;
+        in_magic_square = false;
     }
 
     public void _on_enter_pickup(Pickup pickup)
